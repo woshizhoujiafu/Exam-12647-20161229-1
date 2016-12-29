@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="http://www.springframework.org/schema/beans" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+       http://www.springframework.org/schema/beans/spring-beans-4.3.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context-4.3.xsd">
+
+	<context:property-placeholder location="classpath:dbconfig.properties" />
+    <bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource">
+        <property name="driverClassName" value="${driver}"></property>
+        <property name="url" value="${dburl}"></property>
+        <property name="username" value="${user}"></property>
+        <property name="password" value="${password}"></property>
+    </bean>
+
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="configLocation" value="classpath:mybatis-context.xml"></property>
+        <property name="dataSource" ref="dataSource" />
+        <property name="typeAliasesPackage" value="hand.zjf.entity" />
+    </bean>
+    
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+
+    <aop:config>
+        <aop:advisor id="methodTimeLog" advice-ref="methodTimeAdvice" pointcut="execution(* *..service..*(..))"/>
+    </aop:config>
+    <bean id="methodTimeAdvice" class="hand.zjf.dto.MethodTimeAdvice"/>
+
+	<!--<aop:aspectj-autoproxy/>-->
+	
+    <bean id="filmOperationDao" class="org.mybatis.spring.mapper.MapperFactoryBean">
+        <property name="mapperInterface" value="hand.zjf.dao.FilmOperationDao"></property>
+        <property name="sqlSessionFactory" ref="sqlSessionFactory"></property>
+    </bean>
+	
+    <bean id="filmOperationService" class="hand.zjf.service.impl.FilmOperationServiceImpl">
+        <property name="filmOperationDao" ref="filmOperationDao"></property>
+    </bean>
+    
+    <bean id="afterInsertFilmEventListener" class="hand.zjf.event.listener.AfterInsertFilmEventListener"/>
+    
+    <bean id="beforeInsertFilmEventListener" class="hand.zjf.event.listener.BeforeInsertFilmEventListener"/>
+    
+    
+
+</beans>
